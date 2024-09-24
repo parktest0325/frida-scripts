@@ -15,10 +15,9 @@ const FG_MAGENTA = "\x1b[35m";
 const FG_CYAN = "\x1b[36m";
 const FG_WHITE = "\x1b[37m";
 
-var printDepth = -1;
-function PrintCallWithIndent(tag, message, increment = 0, mcolor = RESET) {
-    printDepth += increment;
-    var indent = tag == "[*]" ? '' : ' '.repeat(Math.max(0, printDepth * 2));
+var printDepth = 0;
+function PrintCallWithIndent(tag, message, depth = 0, mcolor = RESET) {
+    var indent = ' '.repeat(Math.max(0, depth * 2));
 
     var prefix = "";
     switch (tag) {
@@ -65,7 +64,7 @@ Interceptor.attach(Module.findExportByName(null, "android_dlopen_ext"), {
                                 this.offset = lst[idx].offset
                                 this.fname = lst[idx].fname;
                                 this.flags = lst[idx].flags;
-                                PrintCallWithIndent("[+]", "CALL [" + this.fname + "] (" + this.enterCtx.pc.add(-libtarget) + ")", +1);
+                                PrintCallWithIndent("[+]", "CALL [" + this.fname + "] (" + this.enterCtx.pc.add(-libtarget) + ")", printDepth++);
                             },
                             onLeave: function () {
                                 if (this.flags & FLAG_STACK_TRACE) {
@@ -73,7 +72,7 @@ Interceptor.attach(Module.findExportByName(null, "android_dlopen_ext"), {
                                         .map(DebugSymbol.fromAddress).join("\n");
                                     PrintCallWithIndent("[*]", "Backtrace: \n" + backtrace);
                                 }
-                                PrintCallWithIndent("[-]", "LEAVE [" + this.fname + "] (" + this.enterCtx.pc.add(-libtarget) + ")", -1);
+                                PrintCallWithIndent("[-]", "LEAVE [" + this.fname + "] (" + this.enterCtx.pc.add(-libtarget) + ")", --printDepth);
                             }
                         });
                     })(i);
